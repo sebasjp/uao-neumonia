@@ -1,10 +1,10 @@
 [project]
 name = "uao-neumonia"
 version = "0.1.0"
-description = "Add your description here"
+description = "Herramienta para la detección de neumonía en radiografías de tórax mediante Deep Learning y Grad-CAM"
 readme = "README.md"
 authors = [
-    { name = "Cesar Carabali", email = "cesaryagami001@hotmail.com" }
+    { name = "Cesar Carabali", email = "cesar_and.carabali@uao.edu.co" }
 ]
 requires-python = ">=3.13"
 dependencies = [
@@ -20,9 +20,5 @@ dependencies = [
     "tkcap>=0.0.4",
 ]
 
-[project.scripts]
-uao-neumonia = "uao_neumonia:main"
-
-[build-system]
-requires = ["uv_build>=0.12.2,<0.13.0"]
-build-backend = "uv_build"
+[tool.uv]
+package = false
