@@ -9,7 +9,6 @@ import getpass
 from PIL import ImageTk, Image
 import csv
 import pyautogui
-import tkcap
 import img2pdf
 import numpy as np
 import time
@@ -236,9 +235,14 @@ class App:
             showinfo(title="Guardar", message="Los datos se guardaron con éxito.")
 
     def create_pdf(self):
-        cap = tkcap.CAP(self.root)
+        self.root.update()
+        x = self.root.winfo_rootx()
+        y = self.root.winfo_rooty()
+        width = self.root.winfo_width()
+        height = self.root.winfo_height()
         ID = "Reporte" + str(self.reportID) + ".jpg"
-        img = cap.capture(ID)
+        img = pyautogui.screenshot(region=(x, y, width, height))
+        img.save(ID)
         img = Image.open(ID)
         img = img.convert("RGB")
         pdf_path = r"Reporte" + str(self.reportID) + ".pdf"

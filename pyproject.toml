@@ -17,7 +17,6 @@ dependencies = [
     "python-xlib>=0.33",
     "streamlit>=1.62.0",
     "tensorflow>=2.21.0",
-    "tkcap>=0.0.4",
 ]
 
 [build-system]
