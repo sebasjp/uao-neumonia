@@ -92,7 +92,9 @@ def read_dicom_file(path):
 
 
 def read_jpg_file(path):
-    img = cv2.imread(path)
+    img = cv2.imdecode(np.fromfile(path, dtype=np.uint8), cv2.IMREAD_COLOR)
+    if img is None:
+        raise ValueError(f"No se pudo leer la imagen: {path}")
     img_array = np.asarray(img)
     img2show = Image.fromarray(img_array)
     img2 = img_array.astype(float)
@@ -223,10 +225,15 @@ class App:
         self.img2 = ImageTk.PhotoImage(self.img2)
         print("OK")
         self.text_img2.image_create(END, image=self.img2)
+        self.text2.delete(1.0, "end")
+        self.text3.delete(1.0, "end")
         self.text2.insert(END, self.label)
         self.text3.insert(END, "{:.2f}".format(self.proba) + "%")
 
     def save_results_csv(self):
+        if not self.text1.get().strip():
+            showinfo(title="Guardar", message="Debe ingresar la cédula del paciente.")
+            return
         with open("historial.csv", "a") as csvfile:
             w = csv.writer(csvfile, delimiter="-")
             w.writerow(

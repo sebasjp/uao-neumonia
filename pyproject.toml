@@ -11,11 +11,9 @@ dependencies = [
     "opencv-python>=5.0.0.93",
     "pandas>=3.0.5",
     "pillow>=12.3.0",
-    "plotly>=6.9.0",
     "pyautogui>=0.9.54",
     "pydicom>=3.0.2",
     "python-xlib>=0.33",
-    "streamlit>=1.62.0",
     "tensorflow>=2.21.0",
 ]
 
