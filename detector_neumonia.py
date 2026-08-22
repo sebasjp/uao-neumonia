@@ -9,26 +9,39 @@ import getpass
 from PIL import ImageTk, Image
 import csv
 import pyautogui
-import tkcap
 import img2pdf
 import numpy as np
 import time
-tf.compat.v1.disable_eager_execution()
-tf.compat.v1.experimental.output_all_intermediates(True)
+import pydicom as dicom
+import tensorflow as tf
 import cv2
+
+MODEL_PATH = "conv_MLP_84.h5"
+_model = None
+
+
+def model_fun():
+    global _model
+    if _model is None:
+        _model = tf.keras.models.load_model(MODEL_PATH, compile=False)
+    return _model
 
 
 def grad_cam(array):
     img = preprocess(array)
     model = model_fun()
-    preds = model.predict(img)
-    argmax = np.argmax(preds[0])
-    output = model.output[:, argmax]
     last_conv_layer = model.get_layer("conv10_thisone")
-    grads = K.gradients(output, last_conv_layer.output)[0]
-    pooled_grads = K.mean(grads, axis=(0, 1, 2))
-    iterate = K.function([model.input], [pooled_grads, last_conv_layer.output[0]])
-    pooled_grads_value, conv_layer_output_value = iterate(img)
+    grad_model = tf.keras.models.Model(
+        inputs=model.inputs, outputs=[last_conv_layer.output, model.outputs[0]]
+    )
+    img_tensor = tf.convert_to_tensor(img)
+    with tf.GradientTape() as tape:
+        conv_layer_output, preds = grad_model(img_tensor)
+        argmax = tf.argmax(preds[0])
+        output = preds[:, argmax]
+    grads = tape.gradient(output, conv_layer_output)
+    pooled_grads_value = tf.reduce_mean(grads, axis=(0, 1, 2)).numpy()
+    conv_layer_output_value = conv_layer_output[0].numpy()
     for filters in range(64):
         conv_layer_output_value[:, :, filters] *= pooled_grads_value[filters]
     # creating the heatmap
@@ -68,7 +81,7 @@ def predict(array):
 
 
 def read_dicom_file(path):
-    img = dicom.read_file(path)
+    img = dicom.dcmread(path)
     img_array = img.pixel_array
     img2show = Image.fromarray(img_array)
     img2 = img_array.astype(float)
@@ -79,7 +92,9 @@ def read_dicom_file(path):
 
 
 def read_jpg_file(path):
-    img = cv2.imread(path)
+    img = cv2.imdecode(np.fromfile(path, dtype=np.uint8), cv2.IMREAD_COLOR)
+    if img is None:
+        raise ValueError(f"No se pudo leer la imagen: {path}")
     img_array = np.asarray(img)
     img2show = Image.fromarray(img_array)
     img2 = img_array.astype(float)
@@ -194,23 +209,34 @@ class App:
             ),
         )
         if filepath:
-            self.array, img2show = read_dicom_file(filepath)
-            self.img1 = img2show.resize((250, 250), Image.ANTIALIAS)
+            if filepath.lower().endswith(".dcm"):
+                self.array, img2show = read_dicom_file(filepath)
+            else:
+                self.array, img2show = read_jpg_file(filepath)
+            self.img1 = img2show.resize((250, 250), Image.LANCZOS)
             self.img1 = ImageTk.PhotoImage(self.img1)
+            self.text_img1.delete(1.0, "end")
             self.text_img1.image_create(END, image=self.img1)
+            self.text1.delete(0, "end")
             self.button1["state"] = "enabled"
 
     def run_model(self):
         self.label, self.proba, self.heatmap = predict(self.array)
         self.img2 = Image.fromarray(self.heatmap)
-        self.img2 = self.img2.resize((250, 250), Image.ANTIALIAS)
+        self.img2 = self.img2.resize((250, 250), Image.LANCZOS)
         self.img2 = ImageTk.PhotoImage(self.img2)
         print("OK")
+        self.text_img2.delete(1.0, "end")
         self.text_img2.image_create(END, image=self.img2)
+        self.text2.delete(1.0, "end")
+        self.text3.delete(1.0, "end")
         self.text2.insert(END, self.label)
         self.text3.insert(END, "{:.2f}".format(self.proba) + "%")
 
     def save_results_csv(self):
+        if not self.text1.get().strip():
+            showinfo(title="Guardar", message="Debe ingresar la cédula del paciente.")
+            return
         with open("historial.csv", "a") as csvfile:
             w = csv.writer(csvfile, delimiter="-")
             w.writerow(
@@ -219,9 +245,17 @@ class App:
             showinfo(title="Guardar", message="Los datos se guardaron con éxito.")
 
     def create_pdf(self):
-        cap = tkcap.CAP(self.root)
+        if not self.text1.get().strip():
+            showinfo(title="PDF", message="Debe ingresar la cédula del paciente.")
+            return
+        self.root.update()
+        x = self.root.winfo_rootx()
+        y = self.root.winfo_rooty()
+        width = self.root.winfo_width()
+        height = self.root.winfo_height()
         ID = "Reporte" + str(self.reportID) + ".jpg"
-        img = cap.capture(ID)
+        img = pyautogui.screenshot(region=(x, y, width, height))
+        img.save(ID)
         img = Image.open(ID)
         img = img.convert("RGB")
         pdf_path = r"Reporte" + str(self.reportID) + ".pdf"
@@ -237,8 +271,8 @@ class App:
             self.text1.delete(0, "end")
             self.text2.delete(1.0, "end")
             self.text3.delete(1.0, "end")
-            self.text_img1.delete(self.img1, "end")
-            self.text_img2.delete(self.img2, "end")
+            self.text_img1.delete(1.0, "end")
+            self.text_img2.delete(1.0, "end")
             showinfo(title="Borrar", message="Los datos se borraron con éxito")
 
 
