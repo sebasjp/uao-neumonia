@@ -215,7 +215,9 @@ class App:
                 self.array, img2show = read_jpg_file(filepath)
             self.img1 = img2show.resize((250, 250), Image.LANCZOS)
             self.img1 = ImageTk.PhotoImage(self.img1)
+            self.text_img1.delete(1.0, "end")
             self.text_img1.image_create(END, image=self.img1)
+            self.text1.delete(0, "end")
             self.button1["state"] = "enabled"
 
     def run_model(self):
@@ -224,6 +226,7 @@ class App:
         self.img2 = self.img2.resize((250, 250), Image.LANCZOS)
         self.img2 = ImageTk.PhotoImage(self.img2)
         print("OK")
+        self.text_img2.delete(1.0, "end")
         self.text_img2.image_create(END, image=self.img2)
         self.text2.delete(1.0, "end")
         self.text3.delete(1.0, "end")
@@ -242,6 +245,9 @@ class App:
             showinfo(title="Guardar", message="Los datos se guardaron con éxito.")
 
     def create_pdf(self):
+        if not self.text1.get().strip():
+            showinfo(title="PDF", message="Debe ingresar la cédula del paciente.")
+            return
         self.root.update()
         x = self.root.winfo_rootx()
         y = self.root.winfo_rooty()
@@ -265,8 +271,8 @@ class App:
             self.text1.delete(0, "end")
             self.text2.delete(1.0, "end")
             self.text3.delete(1.0, "end")
-            self.text_img1.delete(self.img1, "end")
-            self.text_img2.delete(self.img2, "end")
+            self.text_img1.delete(1.0, "end")
+            self.text_img2.delete(1.0, "end")
             showinfo(title="Borrar", message="Los datos se borraron con éxito")
 
 
