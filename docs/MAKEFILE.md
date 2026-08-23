@@ -71,7 +71,7 @@ Levanta la aplicación de vista/cliente (`src/detector_view.py`) usando el entor
 make run
 ```
 
-> Nota: el nombre `detector_view.py` (en vez de `detector_neumonia.py`) es intencional durante el refactor: el monolito original sigue viviendo en la raíz del repo (`detector_neumonia.py`) mientras el resto del equipo trabaja sobre él. Usar un nombre distinto en `src/` evita confundir cuál archivo se está ejecutando o importando. Antes de la entrega final, el equipo debe decidir si se renombra a `detector_neumonia.py` para calzar exactamente con la tabla de módulos del enunciado, o si se documenta el nombre definitivo en el README.
+> Nota: el nombre `detector_view.py` (en vez de `detector_neumonia.py`) es intencional durante el refactor: el monolito original sigue viviendo en la raíz del repo (`detector_neumonia.py`) mientras el resto del equipo trabaja sobre él. Usar un nombre distinto en `src/` evita confundir cuál archivo se está ejecutando o importando. 
 
 ### `make clean`
 Elimina carpetas de caché generadas por Python, `pytest` y `ruff` (`__pycache__`, `.pytest_cache`, `.ruff_cache`, `htmlcov`, `.coverage`).
