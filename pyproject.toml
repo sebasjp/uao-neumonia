@@ -31,3 +31,19 @@ dev = [
     "pytest-cov>=7.1.0",
     "ruff>=0.16.4",
 ]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+
+[tool.ruff.lint]
+# D100-D107: exige docstring en módulos/clases/funciones/métodos públicos.
+# D417: exige documentar cada parámetro declarado en la firma (Args:).
+# Ver AGENTS.md#estilo-de-código.
+extend-select = ["D100", "D101", "D102", "D103", "D104", "D106", "D107", "D417"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.per-file-ignores]
+# En test/ los docstrings no son obligatorios: el nombre del test ya documenta el caso.
+"test/**" = ["D"]

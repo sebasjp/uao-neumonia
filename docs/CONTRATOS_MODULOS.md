@@ -12,19 +12,21 @@ Las firmas están extraídas del comportamiento real y ya funcional del monolito
 **Retornos con más de un valor usan `NamedTuple`, no tuplas planas.** Una tupla plana (`(label, proba, heatmap)`) obliga a recordar el orden de memoria; si alguien lo invierte, el código sigue corriendo con datos mezclados y sin ningún error. Un `NamedTuple` se accede por nombre (`resultado.label`) además de por posición, así que un error de referencia falla de inmediato en vez de producir un bug silencioso. Cada `NamedTuple` se define en el módulo dueño del dato (no en un archivo de tipos compartido aparte) y se importa desde ahí.
 
 ```
-Vista (detector_view.py)
+Vista (view/detector_view.py)
    │  llama a
    ▼
-Integrador (integrator.py) ──► Controlador (read_img.py, preprocess_img.py)
+Integrador (controller/integrator.py) ──► Controlador (controller/read_img.py, controller/preprocess_img.py)
    │
-   └──────────────► Modelo (load_model.py, grad_cam.py)
+   └──────────────► Modelo (model/load_model.py, model/grad_cam.py)
 ```
+
+Todas las rutas de arriba son relativas a `src/`.
 
 ---
 
 ## Modelo — Julian
 
-### `src/load_model.py`
+### `src/model/load_model.py`
 
 `MODEL_PATH` apunta a `model/conv_MLP_84.h5`, resuelto relativo a la raíz del proyecto (no al `cwd`) — ver convención de rutas en [`AGENTS.md`](../AGENTS.md#rutas-de-archivos).
 
@@ -38,7 +40,7 @@ def load_model() -> tf.keras.Model:
     """
 ```
 
-### `src/grad_cam.py`
+### `src/model/grad_cam.py`
 
 ```python
 def generate_gradcam(
@@ -56,7 +58,7 @@ def generate_gradcam(
 
 ## Controlador
 
-### `src/read_img.py` — Cesar
+### `src/controller/read_img.py` — Cesar
 
 ```python
 class ImageReadResult(NamedTuple):
@@ -85,7 +87,7 @@ def read_jpg_file(path: str) -> ImageReadResult:
 
 - La decisión de cuál función llamar según la extensión del archivo es responsabilidad de quien orquesta la carga (Vista), no de este módulo.
 
-### `src/preprocess_img.py` — Juan
+### `src/controller/preprocess_img.py` — Juan
 
 ```python
 def preprocess(array: np.ndarray) -> np.ndarray:
@@ -97,7 +99,7 @@ def preprocess(array: np.ndarray) -> np.ndarray:
     """
 ```
 
-### `src/integrator.py` — Juan
+### `src/controller/integrator.py` — Juan
 
 ```python
 class PredictionResult(NamedTuple):
@@ -123,12 +125,12 @@ def predict(array: np.ndarray) -> PredictionResult:
 
 ## Vista / Cliente — Sebastian
 
-### `src/detector_view.py`
+### `src/view/detector_view.py`
 
 No expone funciones públicas para otros módulos — es la capa más externa (punto de entrada de la app). Solo importa:
 
-- `read_dicom_file`, `read_jpg_file` de `src.read_img`
-- `predict` de `src.integrator`
+- `read_dicom_file`, `read_jpg_file` de `src.controller.read_img`
+- `predict` de `src.controller.integrator`
 
 Rutas de archivos que le corresponden (ver [`AGENTS.md`](../AGENTS.md#rutas-de-archivos)):
 - El diálogo de carga de imagen abre por defecto en `images/`.
@@ -147,4 +149,4 @@ def predict_mock(array: np.ndarray) -> PredictionResult:
     )
 ```
 
-Cuando el módulo real esté listo, se reemplaza el import del mock por el import real (`from src.integrator import predict`). Si el contrato se respetó, `detector_view.py` no debería necesitar cambios.
+Cuando el módulo real esté listo, se reemplaza el import del mock por el import real (`from src.controller.integrator import predict`). Si el contrato se respetó, `detector_view.py` no debería necesitar cambios.

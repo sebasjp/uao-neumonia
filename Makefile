@@ -19,7 +19,7 @@ test-cov:
 	uv run pytest test --cov=src --cov-report=term-missing
 
 run:
-	uv run python -m src.detector_view
+	uv run python -m src.view.detector_view
 
 clean:
 	find . -type d -name "__pycache__" -exec rm -rf {} +

@@ -8,10 +8,10 @@ Proyecto Neumonía: herramienta de apoyo al diagnóstico médico que clasifica r
 
 ## Estructura
 
-- `src/` — todo el código fuente de la aplicación.
-  - `load_model.py`, `grad_cam.py` — Modelo
-  - `read_img.py`, `preprocess_img.py`, `integrator.py` — Controlador
-  - `detector_view.py` — Vista / Cliente
+- `src/` — todo el código fuente de la aplicación, organizado por capa MVC.
+  - `model/load_model.py`, `model/grad_cam.py` — Modelo
+  - `controller/read_img.py`, `controller/preprocess_img.py`, `controller/integrator.py` — Controlador
+  - `view/detector_view.py` — Vista / Cliente (más sus helpers internos, ej. `view/historial_csv_writer.py`, `view/reporte_pdf_generator.py`)
 - `test/` — pruebas unitarias con `pytest`, un archivo de test por módulo de `src/`.
 - `docs/` — documentación del proyecto (contratos, plan de pruebas, debugging log, este archivo referenciado).
 
@@ -32,10 +32,12 @@ Los comandos del día a día están centralizados en el `Makefile` — ver [`doc
 ## Estilo de código
 
 - PEP 8, verificado con `ruff` (`make lint`) y autoformateado con `make format`.
-- Docstrings obligatorios en toda función y método público — qué recibe, qué retorna, no cómo funciona por dentro.
+- Docstrings obligatorios en todo módulo, clase, función y método público, en formato **Google style** (`Args:`, `Returns:`, `Raises:`, `Attributes:`) — cada parámetro documentado por su nombre, qué retorna, qué excepción lanza y cuándo; no cómo funciona por dentro. Verificado automáticamente por `ruff` (`make lint`, reglas `D100-D107` y `D417` en `pyproject.toml`); no aplica a `test/` (el nombre del test ya documenta el caso).
 - Cero warnings: si algo emite un warning (de TensorFlow, Pillow, pydicom, etc.), se corrige la causa, no se silencia con `warnings.filterwarnings`.
 - Cero código deprecado (APIs marcadas deprecated en las versiones usadas).
 - Sin abstracciones ni manejo de errores para casos que no pueden ocurrir. No hacer refactors o limpiezas fuera del alcance de lo que se está trabajando.
+- **Cohesión**: cada clase resuelve un solo propósito. No agrupar funciones inconexas en clases/archivos tipo `utils.py` o `Manager.py`. Si un método hace algo claramente distinto al resto de la clase (ej. persistencia, generación de reportes, acceso a I/O externo), extraerlo a su propia clase con nombre específico (`HistorialCSVWriter`, `ReportePDFGenerator`, no `Helper`/`Utils`).
+- **Acoplamiento**: exponer el contrato de un método (qué hace, qué recibe, qué retorna) sin filtrar cómo lo hace por dentro. Preferir que un objeto reciba sus colaboradores (o los cree él mismo de forma aislada) en vez de que el resto del código dependa de su implementación interna — esto es lo que permite mockear en los tests sin tocar la lógica real.
 
 Antes de cualquier commit: `make lint` y `make format-check` deben pasar sin errores.
 
@@ -43,6 +45,7 @@ Antes de cualquier commit: `make lint` y `make format-check` deben pasar sin err
 
 - Toda función nueva o modificada en `src/` necesita su prueba correspondiente en `test/`.
 - `make test` (o `make test-cov` para ver cobertura) debe pasar en verde antes de abrir un Pull Request.
+- Cada prueba se estructura en las tres fases del patrón **AAA** (Arrange / Act / Assert), marcadas con comentarios, y se agrupa en una clase `TestNombreDeLoQueSePrueba` — ver el ejemplo en [`docs/PLAN_PRUEBAS.md`](docs/PLAN_PRUEBAS.md#patrón-aaa-con-pytest).
 - Ideas de casos de prueba por módulo, incluyendo regresión de bugs ya corregidos: [`docs/PLAN_PRUEBAS.md`](docs/PLAN_PRUEBAS.md).
 
 ## Contratos entre módulos
@@ -58,18 +61,18 @@ Las firmas de función documentadas en [`docs/CONTRATOS_MODULOS.md`](docs/CONTRA
 
 ## Rutas de archivos
 
-Tres carpetas fijas en la raíz desacoplan el código de dónde viven los archivos:
+Tres carpetas fijas en la raíz desacoplan el código de dónde viven los archivos. Ojo: `model/` (raíz, datos) es distinta de `src/model/` (código del Modelo) — mismo nombre, propósito distinto.
 
 - **`model/`** — el `.h5` del modelo. `load_model.py` resuelve `MODEL_PATH` apuntando a `model/conv_MLP_84.h5` (una sola constante, no hardcodeada en más de un lugar). Nunca se commitea (ya está en `.gitignore`); cada integrante debe tener su propia copia local ahí.
 - **`images/`** — carpeta por defecto (`initialdir`) del diálogo de carga de imagen en `detector_view.py`. No es obligatorio que las imágenes del usuario vivan ahí — es solo el punto de partida del explorador de archivos, no una restricción de origen.
 - **`results/`** — todo lo que la Vista genera: `historial.csv` (botón "Guardar") y los reportes (`ReporteN.jpg` / `ReporteN.pdf`, botón "PDF"). `detector_view.py` nunca escribe en la raíz del repo ni asume el directorio de trabajo actual.
 
-Estas rutas se resuelven relativas a la raíz del proyecto con `pathlib`, no al directorio de trabajo actual (`cwd`) — así funcionan igual sin importar desde dónde se invoque `python`/`uv run` (ej. el `WORKDIR` dentro de Docker puede ser distinto):
+Estas rutas se resuelven relativas a la raíz del proyecto con `pathlib`, no al directorio de trabajo actual (`cwd`) — así funcionan igual sin importar desde dónde se invoque `python`/`uv run` (ej. el `WORKDIR` dentro de Docker puede ser distinto). Como el código vive en `src/<capa>/archivo.py` (dos niveles bajo la raíz), hacen falta tres `.parent`:
 
 ```python
 from pathlib import Path
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent  # src/ -> raíz del repo
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent  # src/<capa>/ -> raíz del repo
 MODEL_PATH = PROJECT_ROOT / "model" / "conv_MLP_84.h5"
 ```
 
