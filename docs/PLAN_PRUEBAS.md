@@ -2,7 +2,7 @@
 
 Objetivo: ~120 pruebas con `pytest`, repartidas según la complejidad real de cada módulo (no 20 parejo — ver `docs/CONTRATOS_MODULOS.md` para las firmas que estas pruebas deben validar).
 
-Este documento es un **menú de ideas de partida**, no una checklist obligatoria exacta. Usen `@pytest.mark.parametrize` para cubrir varios casos con una sola función de prueba — cuenta como N pruebas en el reporte de pytest sin duplicar código (evita el problema de "código repetido" que también penaliza el curso).
+Este documento es un **menú de ideas de partida**, no una checklist obligatoria exacta. Usen `@pytest.mark.parametrize` para cubrir varios casos con una sola función de prueba — cuenta como N pruebas en el reporte de pytest sin duplicar código (evita el problema de "código repetido").
 
 Categorías, en cada módulo:
 1. **Camino feliz** — cumple el contrato con inputs válidos típicos.

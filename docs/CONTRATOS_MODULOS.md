@@ -26,6 +26,8 @@ Integrador (integrator.py) ──► Controlador (read_img.py, preprocess_img.py
 
 ### `src/load_model.py`
 
+`MODEL_PATH` apunta a `model/conv_MLP_84.h5`, resuelto relativo a la raíz del proyecto (no al `cwd`) — ver convención de rutas en [`AGENTS.md`](../AGENTS.md#rutas-de-archivos).
+
 ```python
 def load_model() -> tf.keras.Model:
     """
@@ -127,6 +129,10 @@ No expone funciones públicas para otros módulos — es la capa más externa (p
 
 - `read_dicom_file`, `read_jpg_file` de `src.read_img`
 - `predict` de `src.integrator`
+
+Rutas de archivos que le corresponden (ver [`AGENTS.md`](../AGENTS.md#rutas-de-archivos)):
+- El diálogo de carga de imagen abre por defecto en `images/`.
+- `historial.csv` y los reportes (`ReporteN.jpg` / `ReporteN.pdf`) se escriben en `results/`, nunca en la raíz del repo ni en el `cwd`.
 
 ## Cómo desarrollar en paralelo sin bloquearse
 

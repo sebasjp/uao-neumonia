@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Lineamientos para cualquier persona o agente de código (Claude Code, Copilot, Cursor, Codex, etc.) que trabaje en este repositorio. Léelo antes de modificar cualquier archivo.
+Lineamientos para cualquier persona o agente de código (Claude Code, Cursor, Opencode, etc.) que trabaje en este repositorio. Léelo antes de modificar cualquier archivo.
 
 ## Contexto del proyecto
 
@@ -56,9 +56,22 @@ Las firmas de función documentadas en [`docs/CONTRATOS_MODULOS.md`](docs/CONTRA
 
 [`docs/DEBUGGING_MONOLITO.md`](docs/DEBUGGING_MONOLITO.md) documenta bugs reales ya resueltos en la versión monolítica del proyecto (rutas Unicode, acumulación de texto/imágenes en la GUI, APIs removidas en Pillow/pydicom/Keras 3, etc.). Revísalo antes de reimplementar la lógica equivalente en el módulo correspondiente, para no reintroducir el mismo problema.
 
-## Modelo (`.h5`)
+## Rutas de archivos
 
-`conv_MLP_84.h5` y `WilhemNet86.h5` nunca se commitean (ya están en `.gitignore`). Cada integrante debe tener su propia copia local en la ruta que espera `load_model.py`.
+Tres carpetas fijas en la raíz desacoplan el código de dónde viven los archivos:
+
+- **`model/`** — el `.h5` del modelo. `load_model.py` resuelve `MODEL_PATH` apuntando a `model/conv_MLP_84.h5` (una sola constante, no hardcodeada en más de un lugar). Nunca se commitea (ya está en `.gitignore`); cada integrante debe tener su propia copia local ahí.
+- **`images/`** — carpeta por defecto (`initialdir`) del diálogo de carga de imagen en `detector_view.py`. No es obligatorio que las imágenes del usuario vivan ahí — es solo el punto de partida del explorador de archivos, no una restricción de origen.
+- **`results/`** — todo lo que la Vista genera: `historial.csv` (botón "Guardar") y los reportes (`ReporteN.jpg` / `ReporteN.pdf`, botón "PDF"). `detector_view.py` nunca escribe en la raíz del repo ni asume el directorio de trabajo actual.
+
+Estas rutas se resuelven relativas a la raíz del proyecto con `pathlib`, no al directorio de trabajo actual (`cwd`) — así funcionan igual sin importar desde dónde se invoque `python`/`uv run` (ej. el `WORKDIR` dentro de Docker puede ser distinto):
+
+```python
+from pathlib import Path
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent  # src/ -> raíz del repo
+MODEL_PATH = PROJECT_ROOT / "model" / "conv_MLP_84.h5"
+```
 
 ## Flujo de Git
 
