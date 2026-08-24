@@ -63,7 +63,7 @@ make test-cov
 ```
 
 ### `make run`
-Levanta la aplicación de vista/cliente (`src/detector_view.py`) usando el entorno gestionado por `uv`.
+Levanta la aplicación de vista/cliente (`src/view/detector_view.py`) usando el entorno gestionado por `uv`.
 
 **Cuándo usarlo:** para probar manualmente la interfaz Tkinter mientras se desarrolla, o en la demo en vivo de la sustentación.
 

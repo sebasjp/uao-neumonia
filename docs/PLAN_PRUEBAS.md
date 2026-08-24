@@ -11,6 +11,47 @@ Categorías, en cada módulo:
 4. **Integración** — que los módulos conectados entre sí sigan cumpliendo el contrato.
 5. **Errores/excepciones** — tipo de excepción correcto ante entradas inválidas.
 
+## Patrón AAA con Pytest
+
+Toda prueba (de cualquier módulo) se organiza en tres fases, marcadas con comentarios, y se agrupa en una clase `TestNombreDeLoQueSePrueba` — una clase por función o clase bajo prueba, no una clase gigante para todo el archivo:
+
+- **Arrange** — preparar los datos/objetos de entrada.
+- **Act** — ejecutar la acción bajo prueba (usualmente una sola línea).
+- **Assert** — validar el resultado.
+
+```python
+# test/test_preprocess_img.py
+import numpy as np
+import pytest
+
+from src.controller.preprocess_img import preprocess
+
+
+class TestPreprocess:
+    def test_shape_and_dimensions(self):
+        # Arrange — datos de entrada ficticios
+        raw_img = np.random.randint(0, 256, size=(1000, 1000, 3), dtype=np.uint8)
+
+        # Act
+        processed_img = preprocess(raw_img)
+
+        # Assert
+        assert processed_img.shape == (1, 512, 512, 1)
+
+    def test_normalization_range(self):
+        # Arrange
+        raw_img = np.random.randint(0, 256, size=(800, 800, 3), dtype=np.uint8)
+
+        # Act
+        processed_img = preprocess(raw_img)
+
+        # Assert
+        assert 0.0 <= processed_img.min()
+        assert processed_img.max() <= 1.0
+```
+
+Cuando el caso de prueba viene de `@pytest.mark.parametrize`, el Arrange es implícito (son los parámetros); igual se marcan las fases de Act y Assert.
+
 ---
 
 ## `load_model.py` — Julian (~5-8 pruebas)
