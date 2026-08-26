@@ -29,4 +29,8 @@ docker-build:
 	docker build -t uao-neumonia .
 
 docker-run: docker-build
-	docker run --rm -e DISPLAY=$$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix uao-neumonia
+	docker run --rm \
+		-e DISPLAY=$(DISPLAY) \
+		-v /tmp/.X11-unix:/tmp/.X11-unix \
+		-v $(CURDIR)/model:/app/model \
+		uao-neumonia
