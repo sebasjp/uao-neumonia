@@ -35,7 +35,7 @@ class TestReadDicomFile:
         # Assert
         assert isinstance(result, ImageReadResult)
 
-    def test_img_array_es_rgb_de_tres_canales(self):
+    def test_img_array_tiene_tres_canales(self):
         # Arrange
         pixel_array = np.full((10, 10), 100, dtype=np.uint16)
         fake_dataset = _fake_dicom_dataset(pixel_array)
@@ -181,14 +181,20 @@ class TestReadJpgFile:
         # Assert
         assert result.img_array.dtype == np.uint8
 
-    def test_canales_quedan_en_orden_rgb_no_bgr(self, tmp_path):
-        # Arrange: color asimétrico para detectar si los canales quedaron invertidos
+    def test_canales_quedan_en_orden_bgr_nativo_de_opencv(self, tmp_path):
+        # Arrange: color con canales físicos muy distintos (R=200, B=10),
+        # para poder detectar en qué posición del arreglo queda cada uno.
         path = tmp_path / "radiografia_color.jpg"
         Image.new("RGB", (5, 5), color=(200, 30, 10)).save(path)
 
         # Act
         result = read_jpg_file(str(path))
 
-        # Assert: el canal rojo debe seguir siendo el dominante (no invertido a azul)
-        avg_r, _avg_g, avg_b = result.img_array.mean(axis=(0, 1))
-        assert avg_r > avg_b
+        # Assert: por convención del equipo (ver docs/CONTRATOS_MODULOS.md),
+        # el arreglo se mantiene en BGR nativo de cv2.imdecode, sin conversión
+        # a RGB — el índice 0 debe ser el canal azul (bajo) y el índice 2 el
+        # canal rojo (alto).
+        avg_channel_0, _avg_channel_1, avg_channel_2 = result.img_array.mean(
+            axis=(0, 1)
+        )
+        assert avg_channel_0 < avg_channel_2

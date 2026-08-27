@@ -62,7 +62,7 @@ def generate_gradcam(
 
 ```python
 class ImageReadResult(NamedTuple):
-    img_array: np.ndarray        # RGB, uint8, tamaño original — insumo para preprocess()
+    img_array: np.ndarray        # BGR (nativo de cv2), uint8, tamaño original — insumo para preprocess()
     img_display: PIL.Image.Image # insumo para mostrar en la GUI
 
 
@@ -86,6 +86,8 @@ def read_jpg_file(path: str) -> ImageReadResult:
 ```
 
 - La decisión de cuál función llamar según la extensión del archivo es responsabilidad de quien orquesta la carga (Vista), no de este módulo.
+
+> **Nota (acordado por el equipo, 2026-08-27):** este contrato originalmente decía "RGB" para `img_array`, lo cual contradecía a `preprocess_img.py` y `grad_cam.py`, que ya asumían BGR — una inconsistencia detectada al revisar el PR de `preprocess_img.py`/`integrator.py`. Se corrigió aquí en vez de tocar los otros dos módulos (uno de ellos ya mergeado) por ser el cambio de menor riesgo. Todo el pipeline usa BGR de forma consistente a partir de este punto.
 
 ### `src/controller/preprocess_img.py` — Juan
 
