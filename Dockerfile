@@ -7,6 +7,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     tk \
     libgl1 \
     libglib2.0-0 \
+    gnome-screenshot \
     && rm -rf /var/lib/apt/lists/*
 
 # Archivo vacío requerido por python-xlib (usada por pyautogui) para no
