@@ -1,3 +1,7 @@
+![Python](https://img.shields.io/badge/python-3.13-blue)
+![uv](https://img.shields.io/badge/deps-uv-purple)
+![License](https://img.shields.io/badge/license-MIT-green)
+
 ## Hola! Bienvenido a la herramienta para la detección rápida de neumonía
 
 Deep Learning aplicado en el procesamiento de imágenes radiográficas de tórax en formato DICOM con el fin de clasificarlas en 3 categorías diferentes:
@@ -12,28 +16,47 @@ Aplicación de una técnica de explicación llamada Grad-CAM para resaltar con u
 
 ---
 
-## Uso de la herramienta:
+## Uso de la herramienta
 
-A continuación le explicaremos cómo empezar a utilizarla.
+El proyecto usa [`uv`](https://docs.astral.sh/uv/) como gestor de dependencias y **Python 3.13** (versión exigida por el profesor). No se usa `pip` ni `conda` directamente — todos los comandos del día a día están centralizados en el `Makefile` (ver [`docs/MAKEFILE.md`](docs/MAKEFILE.md) para el detalle de cada uno).
 
-Requerimientos necesarios para el funcionamiento:
+### Opción 1: correr localmente
 
-- Instale Anaconda para Windows siguiendo las siguientes instrucciones:
-  https://docs.anaconda.com/anaconda/install/windows/
+Requerimientos: tener [`uv`](https://docs.astral.sh/uv/getting-started/installation/) instalado.
 
-- Abra Anaconda Prompt y ejecute las siguientes instrucciones:
+```bash
+git clone https://github.com/sebasjp/uao-neumonia.git
+cd uao-neumonia
+make install   # instala las dependencias (equivalente a `uv sync`)
+make run       # corre la aplicación
+```
 
-  conda create -n tf tensorflow
+Coloca el archivo del modelo entrenado (`conv_MLP_84.h5`) dentro de la carpeta `model/` antes de correr la aplicación — no se versiona en el repositorio por su tamaño.
 
-  conda activate tf
+### Opción 2: correr con Docker
 
-  cd UAO-Neumonia
+Requerimientos: tener [Docker Desktop](https://www.docker.com/products/docker-desktop/) instalado, y (para ver la interfaz gráfica) un servidor X — en Windows, [VcXsrv](https://sourceforge.net/projects/vcxsrv/) o Xming; en Linux suele funcionar de forma nativa.
 
-  pip install -r requirements.txt
+```bash
+make docker-build   # construye la imagen
+make docker-run     # levanta el contenedor con la interfaz gráfica
+```
 
-  python detector_neumonia.py
+`docker-run` monta tu carpeta local `model/` dentro del contenedor, así que el modelo entrenado debe estar ahí igual que en la opción local.
 
-Uso de la Interfaz Gráfica:
+### Pruebas y calidad de código
+
+El proyecto exige cero warnings y pruebas unitarias sobre cada módulo. Antes de abrir un Pull Request, corre:
+
+```bash
+make lint            # revisa estilo y docstrings (ruff)
+make format-check     # verifica formateo sin modificar archivos
+make test             # corre la suite de pruebas unitarias (pytest)
+```
+
+Ver [`docs/MAKEFILE.md`](docs/MAKEFILE.md) para el detalle de cada comando, y [`docs/PLAN_PRUEBAS.md`](docs/PLAN_PRUEBAS.md) para el criterio de pruebas de cada módulo.
+
+### Uso de la Interfaz Gráfica
 
 - Ingrese la cédula del paciente en la caja de texto
 - Presione el botón 'Cargar Imagen', seleccione la imagen del explorador de archivos del computador (Imagenes de prueba en https://drive.google.com/drive/folders/1WOuL0wdVC6aojy8IfssHcqZ4Up14dy0g?usp=drive_link)
@@ -44,26 +67,38 @@ Uso de la Interfaz Gráfica:
 
 ---
 
-## Arquitectura de archivos propuesta.
+## Arquitectura de archivos
 
-## detector_neumonia.py
+El proyecto sigue una arquitectura MVC (Modelo-Vista-Controlador), organizada dentro de `src/`:
 
-Contiene el diseño de la interfaz gráfica utilizando Tkinter.
+```
+src/
+├── model/
+│   ├── load_model.py     # Carga y cachea el modelo Keras entrenado
+│   └── grad_cam.py        # Genera el mapa de calor Grad-CAM
+├── controller/
+│   ├── read_img.py         # Lee imágenes DICOM/JPG y las convierte a arreglo
+│   ├── preprocess_img.py   # Preprocesa el arreglo para el modelo
+│   └── integrator.py       # Integra lectura + preprocesamiento + modelo
+└── view/
+    └── detector_view.py    # Interfaz gráfica (Tkinter)
+```
 
-Los botones llaman métodos contenidos en otros scripts.
+### src/model/load_model.py
 
-## integrator.py
+Carga el archivo binario del modelo de red neuronal convolucional previamente entrenado (`conv_MLP_84.h5`), cacheándolo para no recargarlo en cada predicción.
 
-Es un módulo que integra los demás scripts y retorna solamente lo necesario para ser visualizado en la interfaz gráfica.
-Retorna la clase, la probabilidad y una imagen el mapa de calor generado por Grad-CAM.
+### src/model/grad_cam.py
 
-## read_img.py
+Recibe la imagen preprocesada y el modelo, calcula el gradiente respecto a la capa convolucional de interés, y genera el mapa de calor Grad-CAM.
 
-Script que lee la imagen en formato DICOM para visualizarla en la interfaz gráfica. Además, la convierte a arreglo para su preprocesamiento.
+### src/controller/read_img.py
 
-## preprocess_img.py
+Lee la imagen en formato DICOM o JPG, la prepara para visualizarla en la interfaz gráfica y la convierte a arreglo para su preprocesamiento posterior.
 
-Script que recibe el arreglo proveniento de read_img.py, realiza las siguientes modificaciones:
+### src/controller/preprocess_img.py
+
+Recibe el arreglo proveniente de `read_img.py` y realiza las siguientes modificaciones:
 
 - resize a 512x512
 - conversión a escala de grises
@@ -71,13 +106,13 @@ Script que recibe el arreglo proveniento de read_img.py, realiza las siguientes 
 - normalización de la imagen entre 0 y 1
 - conversión del arreglo de imagen a formato de batch (tensor)
 
-## load_model.py
+### src/controller/integrator.py
 
-Script que lee el archivo binario del modelo de red neuronal convolucional previamente entrenado llamado 'WilhemNet86.h5'.
+Integra los demás módulos y retorna solamente lo necesario para ser visualizado en la interfaz gráfica: la clase, la probabilidad, y la imagen del mapa de calor generado por Grad-CAM.
 
-## grad_cam.py
+### src/view/detector_view.py
 
-Script que recibe la imagen y la procesa, carga el modelo, obtiene la predicción y la capa convolucional de interés para obtener las características relevantes de la imagen.
+Contiene el diseño de la interfaz gráfica utilizando Tkinter. Los botones llaman métodos contenidos en los módulos del controlador y el modelo.
 
 ---
 
@@ -98,6 +133,31 @@ Para regularizar el modelo utilizamos 3 capas de Dropout al 20%; dos en los bloq
 Es una técnica utilizada para resaltar las regiones de una imagen que son importantes para la clasificación. Un mapeo de activaciones de clase para una categoría en particular indica las regiones de imagen relevantes utilizadas por la CNN para identificar esa categoría.
 
 Grad-CAM realiza el cálculo del gradiente de la salida correspondiente a la clase a visualizar con respecto a las neuronas de una cierta capa de la CNN. Esto permite tener información de la importancia de cada neurona en el proceso de decisión de esa clase en particular. Una vez obtenidos estos pesos, se realiza una combinación lineal entre el mapa de activaciones de la capa y los pesos, de esta manera, se captura la importancia del mapa de activaciones para la clase en particular y se ve reflejado en la imagen de entrada como un mapa de calor con intensidades más altas en aquellas regiones relevantes para la red con las que clasificó la imagen en cierta categoría.
+
+---
+
+## Documentación adicional
+
+- [`AGENTS.md`](AGENTS.md) — convenciones de código y estructura del proyecto
+- [`docs/CONTRATOS_MODULOS.md`](docs/CONTRATOS_MODULOS.md) — contratos (firmas de funciones) de cada módulo
+- [`docs/PLAN_PRUEBAS.md`](docs/PLAN_PRUEBAS.md) — plan de pruebas unitarias
+- [`docs/DEBUGGING_MONOLITO.md`](docs/DEBUGGING_MONOLITO.md) — historial de bugs corregidos durante el refactor
+- [`docs/MAKEFILE.md`](docs/MAKEFILE.md) — referencia de comandos del `Makefile`
+
+## Licencia
+
+Este proyecto se distribuye bajo la licencia [MIT](LICENSE).
+
+---
+
+## Equipo
+
+Refactor a arquitectura MVC, migración a `uv`, Dockerización y suite de pruebas realizados por:
+
+- Cesar Carabali ([`@CesarCR14`](https://github.com/CesarCR14)) — [`src/controller/read_img.py`](src/controller/read_img.py), revisión de Pull Requests, Docker y documentación (Issue #12)
+- Sebastian Jimenez Parra ([`@sebasjp`](https://github.com/sebasjp)) — [`src/view/`](src/view/), documentación inicial y configuración del proyecto
+- Julian David Correa ([`@jdcg5299`](https://github.com/jdcg5299)) — [`src/model/`](src/model/) (carga del modelo y Grad-CAM)
+- Juan Plata ([`@Juanxo17`](https://github.com/Juanxo17)) — [`src/controller/preprocess_img.py`](src/controller/preprocess_img.py) y [`src/controller/integrator.py`](src/controller/integrator.py)
 
 ## Proyecto original realizado por:
 

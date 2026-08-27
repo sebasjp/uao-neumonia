@@ -1,0 +1,25 @@
+.git
+.venv
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+.coverage.*
+
+# Modelo pesado: se monta como volumen en tiempo de ejecución
+# (ver `docker-run` en el Makefile), no hace falta dentro de la imagen.
+model/*.h5
+
+# Salidas generadas en tiempo de ejecución, no forman parte del código.
+results/
+images/*.jpg
+images/*.jpeg
+images/*.png
+*.dcm
+*.csv
+*.pdf
+
+# Archivo de estado de trabajo, no es parte del proyecto.
+ESTADO_PROYECTO_NEUMONIA.md
