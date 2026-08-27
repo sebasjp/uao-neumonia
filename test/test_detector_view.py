@@ -2,7 +2,6 @@
 """Pruebas para src/view/detector_view.py."""
 
 import csv
-from tkinter import Tk, Toplevel
 from unittest.mock import patch
 
 import numpy as np
@@ -12,33 +11,12 @@ from PIL import Image
 from src.controller.integrator import PredictionResult
 from src.controller.read_img import ImageReadResult, read_dicom_file, read_jpg_file
 from src.view.detector_view import (
-    App,
     elegir_lector,
     formatear_probabilidad,
     validar_cedula,
 )
 
-
-@pytest.fixture(scope="session")
-def tk_root():
-    """Único intérprete Tcl para toda la sesión de pruebas.
-
-    Crear/destruir un `Tk()` real por prueba es inestable en Windows
-    (errores intermitentes de Tcl); en su lugar cada prueba abre un
-    `Toplevel` propio sobre este mismo intérprete.
-    """
-    root = Tk()
-    root.withdraw()
-    yield root
-    root.destroy()
-
-
-@pytest.fixture
-def app(tk_root):
-    toplevel = Toplevel(tk_root)
-    instance = App(master=toplevel)
-    yield instance
-    toplevel.destroy()
+# Fixtures `tk_root` y `app`: ver test/conftest.py.
 
 
 class TestValidarCedula:
