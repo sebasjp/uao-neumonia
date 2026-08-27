@@ -33,4 +33,6 @@ docker-run: docker-build
 		-e DISPLAY=$(DISPLAY) \
 		-v /tmp/.X11-unix:/tmp/.X11-unix \
 		-v $(CURDIR)/model:/app/model \
+		-v $(CURDIR)/results:/app/results \
+		-v $(CURDIR)/images:/app/images \
 		uao-neumonia
